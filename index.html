@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<title>সার বিতরণ সিস্টেম</title>
+<style>
+  :root { --g:#1b7a3a; --gl:#dff3e4; --r:#b71c1c; --rl:#fde0e0; --o:#e65100; --ol:#ffe9d2; --bg:#fafafa; --t:#f1f1f1; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font-family:system-ui,"Noto Sans Bengali",sans-serif; background:var(--bg); color:#1d1d1d; }
+  main { padding:16px; max-width:560px; margin:0 auto; }
+  .card { background:#fff; border:1px solid #ddd; border-radius:20px; padding:18px; }
+  .title { display:flex; align-items:center; gap:12px; font-size:22px; font-weight:700; margin-bottom:14px; }
+  .title i { font-style:normal; font-size:24px; border:2px solid var(--g); border-radius:7px; padding:0 6px; color:var(--g); }
+  .box { background:none; padding:0; }
+  .stats { display:flex; gap:12px; }
+  .st { flex:1; background:#e8f5e9; border-radius:12px; padding:14px 10px; text-align:center; font-size:17px; }
+  .st b { display:block; font-size:32px; color:var(--g); }
+  .box label { font-size:15px; color:#444; }
+  input[type=text], input[type=password], input[type=url], input:not([type]) {
+    width:100%; padding:15px; font-size:20px; border:2px solid #cfcfcf; border-radius:12px; margin-top:10px; background:#fff; }
+  input.sm { font-size:16px; padding:11px; }
+  input:focus { outline:none; border-color:var(--g); }
+  #go { width:100%; padding:15px; font-size:18px; font-weight:700; border:0; border-radius:12px; background:var(--g); color:#fff; margin-top:10px; }
+  #result { display:none; margin-top:12px; padding:16px; border-radius:12px; font-size:18px; font-weight:700; white-space:pre-line; line-height:1.5; }
+  #result .big { font-size:22px; }
+  .ok { background:var(--gl); color:#14602d; } .dup { background:var(--rl); color:var(--r); } .bad { background:var(--ol); color:var(--o); }
+  .hint { font-size:14px; color:#555; margin-top:10px; }
+  hr { border:0; border-top:1px solid #e3e3e3; margin:16px 0; }
+  .tiles { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .tile { background:var(--t); border:2px solid transparent; border-radius:16px; padding:14px; text-align:left; font-size:17px; font-weight:600; color:#222; position:relative; }
+  .tile.on { border-color:var(--g); background:var(--gl); }
+  .tile span { display:block; font-size:24px; margin-bottom:10px; }
+  .badge { position:absolute; top:10px; right:10px; background:var(--g); color:#fff; font-size:12px; border-radius:20px; padding:2px 8px; font-weight:700; }
+  .badge.w { background:#f9a825; color:#222; }
+  .panel { display:none; margin-top:14px; background:var(--t); border-radius:16px; padding:14px; }
+  .panel.show { display:block; }
+  .panel h3 { margin:0 0 6px; font-size:17px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; margin-top:8px; background:#fff; border-radius:8px; }
+  td,th { padding:7px 6px; border-bottom:1px solid #eee; text-align:left; }
+  .btn { width:100%; padding:12px; font-size:15px; font-weight:700; border-radius:10px; border:2px solid var(--g); background:#fff; color:var(--g); margin-top:8px; }
+  .btn.solid { background:var(--g); color:#fff; } .btn.red { border-color:var(--r); color:var(--r); }
+  .row { display:flex; gap:8px; } .row .btn { flex:1; }
+  .warn { background:#fff8e1; border-left:4px solid #f9a825; padding:8px 10px; font-size:13px; border-radius:6px; margin:8px 0; line-height:1.5; }
+  .muted { color:#666; font-size:13px; margin-top:6px; line-height:1.5; }
+  .chk { display:flex; gap:8px; align-items:flex-start; font-size:14px; margin-top:10px; }
+  #sync { font-size:13px; text-align:center; margin-top:12px; color:#555; }
+</style>
+</head>
+<body>
+<main>
+ <div class="card topstats" style="margin-bottom:14px">
+  <div class="stats">
+    <div class="st"><b id="mCount">0</b>মোট প্রাপক</div>
+    <div class="st"><b id="mKg">0</b>মোট কেজি</div>
+  </div>
+ </div>
+
+ <div class="card">
+  <div class="title"><i>▯</i> সার বিতরণ সিস্টেম</div>
+
+  <div class="box">
+    <label for="nid">NID নম্বর লিখুন</label>
+    <input id="nid" inputmode="numeric" autocomplete="off" maxlength="17" placeholder="উদাহরণ: 1234567890" autofocus>
+    <input id="name" class="sm" autocomplete="off" placeholder="নাম (ঐচ্ছিক)">
+    <button id="go">যাচাই করুন</button>
+    <div id="result"></div>
+    <div class="hint">নতুন NID হলে সবুজ সংকেত দেখাবে এবং ২৫ কেজির রেকর্ড সেভ করবে।</div>
+  </div>
+
+ </div>
+
+ <div class="card" style="margin-top:14px">
+  <div class="title" style="font-size:19px">☰ মেনু</div>
+
+  <div class="tiles">
+    <button class="tile" data-p="rec"><span>📋</span>রেকর্ড<b class="badge" id="bCount">0</b></button>
+    <button class="tile" data-p="rec" data-focus="1"><span>🔍</span>দ্রুত NID খোঁজা</button>
+    <button class="tile" data-p="bkp"><span>💾</span>ব্যাকআপ রাখা</button>
+    <button class="tile" data-p="syn"><span>☁️</span>Google সিঙ্ক<b class="badge w" id="bSync" style="display:none">0</b></button>
+  </div>
+
+  <!-- রেকর্ড / খোঁজা -->
+  <div class="panel" id="p-rec">
+    <h3>রেকর্ড (মোট <span id="sCount">0</span> জন, <span id="sKg">0</span> কেজি)</h3>
+    <input id="search" class="sm" placeholder="NID বা নামের অংশ লিখুন">
+    <table id="tbl"></table>
+    <div class="muted" id="tblNote"></div>
+    <button class="btn red" id="undo">সর্বশেষ এন্ট্রি মুছুন (ভুল হলে)</button>
+  </div>
+
+  <!-- ব্যাকআপ -->
+  <div class="panel" id="p-bkp">
+    <h3>ফোনে ব্যাকআপ</h3>
+    <div class="warn">ডেটা Chrome-এর ভেতরে থাকে। "Clear site data" করলে মুছে যাবে।</div>
+    <div class="row"><button class="btn" id="expCsv">CSV ডাউনলোড</button><button class="btn" id="expJson">JSON ব্যাকআপ</button></div>
+    <button class="btn" id="impBtn">ব্যাকআপ ফেরত আনুন (JSON)</button>
+    <input type="file" id="impFile" accept=".json,application/json" style="display:none">
+    <label class="chk"><input type="checkbox" id="auto" checked> প্রতি ২৫টি নতুন এন্ট্রিতে নিজে থেকে CSV ফোনের Downloads ফোল্ডারে সেভ হবে</label>
+    <div class="muted" id="persistNote"></div>
+  </div>
+
+  <!-- Google সিঙ্ক -->
+  <div class="panel" id="p-syn">
+    <h3>Google Drive/Sheet-এ অটো সেভ</h3>
+    <div class="muted">নেট থাকলে প্রতিটি এন্ট্রি নিজে থেকে আপনার Google Sheet-এ চলে যাবে। নেট না থাকলে ফোনে জমা থাকবে, নেট এলে নিজেই পাঠাবে।</div>
+    <input id="sUrl" class="sm" type="url" placeholder="Apps Script Web App URL">
+    <input id="sTok" class="sm" type="password" placeholder="গোপন টোকেন (Apps Script-এর TOKEN)">
+    <div class="row"><button class="btn solid" id="sSave">সেভ + পরীক্ষা</button><button class="btn" id="sNow">এখনই সিঙ্ক</button></div>
+    <div class="muted" id="sMsg"></div>
+  </div>
+
+  <div id="sync"></div>
+ </div>
+</main>
+
+<script>
+const KG = 25, BATCH_BACKUP = 25;
+const $ = id => document.getElementById(id);
+const ls = { get:(k,d)=>{ try{ const v=localStorage.getItem(k); return v===null?d:v; }catch(e){ return d; } },
+             set:(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} } };
+
+// ---------- IndexedDB ----------
+let db;
+function openDb() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('sar-db', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('dist', { keyPath: 'nid' }); // nid = unique key
+    r.onsuccess = () => { db = r.result; res(); };
+    r.onerror = () => rej(r.error);
+  });
+}
+const store = mode => db.transaction('dist', mode).objectStore('dist');
+const p = req => new Promise((res, rej) => { req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error); });
+const getAll = () => p(store('readonly').getAll());
+
+// ---------- Helpers ----------
+function normalize(raw) {
+  const m = { '০':0,'১':1,'২':2,'৩':3,'৪':4,'৫':5,'৬':6,'৭':7,'৮':8,'৯':9 };
+  return [...raw].map(c => c in m ? String(m[c]) : c).join('').replace(/\D/g, '');
+}
+const z = n => String(n).padStart(2,'0');
+const now = () => { const d = new Date(); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function show(cls, html) { const r = $('result'); r.className = cls; r.style.display = 'block'; r.innerHTML = html; }
+function beep(ok) {
+  try { navigator.vibrate && navigator.vibrate(ok ? 80 : [150,80,150]);
+    const a = new (window.AudioContext||window.webkitAudioContext)(), o = a.createOscillator();
+    o.frequency.value = ok ? 880 : 220; o.connect(a.destination); o.start(); o.stop(a.currentTime + (ok?0.12:0.4)); } catch(e){}
+}
+
+// ---------- Core: check & record ----------
+async function submit() {
+  const nid = normalize($('nid').value);
+  if (![10,13,17].includes(nid.length)) {
+    show('bad', `⚠ NID ১০, ১৩ বা ১৭ সংখ্যার হতে হবে<br>(আপনি দিয়েছেন ${nid.length} সংখ্যা)`); beep(false); return;
+  }
+  const entry = { nid, name: $('name').value.trim(), kg: KG, time: now(), seq: Date.now(), synced: 0 };
+  try {
+    await p(store('readwrite').add(entry)); // ConstraintError if NID exists -> duplicate can't be stored
+    show('ok', `<span class="big">✔ নতুন – ${KG} কেজি সার দিন</span><br>NID: ${esc(nid)}`); beep(true);
+    $('nid').value = ''; $('name').value = '';
+    await render(); autoBackup(); syncNow();
+  } catch (e) {
+    if (e && e.name === 'ConstraintError') {
+      e.preventDefault && e.preventDefault();
+      const old = await p(store('readonly').get(nid));
+      show('dup', `<span class="big">⚠ DUPLICATE!</span><br>এই NID দিয়ে আগে সার নেওয়া হয়েছে।<br>NID: ${esc(nid)}` +
+        (old.name ? `<br>নাম: ${esc(old.name)}` : '') + `<br>সময়: ${esc(old.time)}`);
+      beep(false);
+    } else { show('bad', 'সংরক্ষণ ব্যর্থ: ' + esc(e && e.message)); }
+  }
+  $('nid').focus();
+}
+
+// ---------- Render ----------
+async function render() {
+  const all = (await getAll()).sort((a,b) => b.seq - a.seq);
+  $('sCount').textContent = all.length; $('bCount').textContent = all.length;
+  $('sKg').textContent = all.length * KG;
+  $('mCount').textContent = all.length; $('mKg').textContent = all.length * KG;
+  const q = $('search').value.trim(), qn = normalize(q);
+  const list = q ? all.filter(e => (qn && e.nid.includes(qn)) || e.name.toLowerCase().includes(q.toLowerCase())) : all.slice(0, 10);
+  $('tbl').innerHTML = '<tr><th>সময়</th><th>NID</th><th>নাম</th><th></th></tr>' +
+    list.slice(0, 50).map(e => `<tr><td>${e.time.slice(5,16)}</td><td>${e.nid}</td><td>${esc(e.name)}</td><td>${e.synced?'☁️':''}</td></tr>`).join('');
+  $('tblNote').textContent = q ? `${list.length}টি পাওয়া গেছে` : 'সর্বশেষ ১০টি এন্ট্রি (☁️ = Google-এ সেভ হয়েছে)';
+  const pend = all.filter(e => !e.synced).length;
+  $('bSync').style.display = (cfg().url && pend) ? 'inline-block' : 'none'; $('bSync').textContent = pend;
+  $('sync').textContent = !cfg().url ? 'Google সিঙ্ক চালু নেই – শুধু ফোনে সেভ হচ্ছে'
+    : pend ? `☁️ ${pend}টি এন্ট্রি Google-এ পাঠানো বাকি (নেট এলে নিজে পাঠাবে)` : '☁️ সব ডেটা Google-এ সেভ আছে';
+}
+async function undoLast() {
+  const e = (await getAll()).sort((a,b) => b.seq - a.seq)[0];
+  if (!e) return;
+  if (confirm(`এই এন্ট্রি মুছবেন?\n${e.nid} ${e.name}\n${e.time}` + (e.synced ? '\n\n(Google Sheet থেকে নিজে মুছতে হবে)' : ''))) {
+    await p(store('readwrite').delete(e.nid)); show('bad','এন্ট্রি মুছে ফেলা হয়েছে'); render();
+  }
+}
+
+// ---------- Phone backup ----------
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+}
+const stamp = () => now().replace(/[: ]/g, '-');
+async function expCsv() {
+  const all = (await getAll()).sort((a,b) => a.seq - b.seq);
+  download(`sar_${stamp()}.csv`, '﻿nid,name,kg,time\n' + all.map(e => `"${e.nid}","${e.name.replace(/"/g,'""')}",${e.kg},${e.time}`).join('\n'), 'text/csv');
+}
+async function expJson() { download(`sar_backup_${stamp()}.json`, JSON.stringify(await getAll()), 'application/json'); }
+async function autoBackup() {
+  if (!$('auto').checked) return;
+  const n = +ls.get('sinceBackup', 0) + 1;
+  if (n >= BATCH_BACKUP) { ls.set('sinceBackup', 0); expCsv(); } else ls.set('sinceBackup', n);
+}
+async function impJson(file) {
+  try {
+    const data = JSON.parse(await file.text()); let added = 0, skipped = 0;
+    for (const e of data) {
+      if (!e.nid) continue;
+      try { await p(store('readwrite').add({ nid:String(e.nid), name:e.name||'', kg:e.kg||KG, time:e.time||now(), seq:e.seq||Date.now(), synced:e.synced?1:0 })); added++; }
+      catch (er) { skipped++; er.preventDefault && er.preventDefault(); }
+    }
+    alert(`ফেরত আনা হয়েছে: ${added}টি নতুন, ${skipped}টি আগে থেকেই ছিল`); render(); syncNow();
+  } catch (e) { alert('ফাইল পড়া যায়নি: ' + e.message); }
+}
+
+// ---------- Google Sheet sync (Apps Script) ----------
+const cfg = () => ({ url: ls.get('gUrl',''), token: ls.get('gTok','') });
+let syncing = false;
+async function post(rows) {
+  const c = cfg();
+  const r = await fetch(c.url, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ token:c.token, rows }) });
+  const j = await r.json(); if (!j.ok) throw new Error(j.error || 'সার্ভার ত্রুটি'); return j;
+}
+async function syncNow(manual) {
+  if (!cfg().url || syncing) return;
+  if (!navigator.onLine) { if (manual) $('sMsg').textContent = 'ইন্টারনেট নেই – পরে নিজে পাঠাবে'; return; }
+  syncing = true;
+  try {
+    const pend = (await getAll()).filter(e => !e.synced).sort((a,b) => a.seq - b.seq);
+    for (let i = 0; i < pend.length; i += 100) {
+      const b = pend.slice(i, i + 100);
+      await post(b.map(e => ({ nid:e.nid, name:e.name, kg:e.kg, time:e.time })));
+      const t = db.transaction('dist','readwrite');
+      b.forEach(e => t.objectStore('dist').put({ ...e, synced:1 }));
+      await new Promise((res, rej) => { t.oncomplete = res; t.onerror = () => rej(t.error); });
+    }
+    if (manual) $('sMsg').textContent = `✔ সিঙ্ক সম্পন্ন (${pend.length}টি পাঠানো হয়েছে)`;
+  } catch (e) { if (manual) $('sMsg').textContent = '✖ সিঙ্ক ব্যর্থ: ' + e.message; }
+  syncing = false; render();
+}
+async function saveSync() {
+  ls.set('gUrl', $('sUrl').value.trim()); ls.set('gTok', $('sTok').value.trim());
+  if (!cfg().url) { $('sMsg').textContent = 'সিঙ্ক বন্ধ করা হয়েছে'; render(); return; }
+  $('sMsg').textContent = 'পরীক্ষা চলছে...';
+  try { await post([]); $('sMsg').textContent = '✔ সংযোগ ঠিক আছে'; syncNow(true); }
+  catch (e) { $('sMsg').textContent = '✖ সংযোগ হয়নি: ' + e.message + ' (URL/টোকেন/ইন্টারনেট দেখুন)'; }
+  render();
+}
+
+// ---------- Init ----------
+document.querySelectorAll('.tile').forEach(t => t.onclick = () => {
+  const id = 'p-' + t.dataset.p, open = $(id).classList.contains('show') && !t.dataset.focus;
+  document.querySelectorAll('.panel').forEach(x => x.classList.remove('show'));
+  document.querySelectorAll('.tile').forEach(x => x.classList.remove('on'));
+  if (!open) { $(id).classList.add('show'); t.classList.add('on'); if (t.dataset.focus) $('search').focus(); }
+});
+$('go').onclick = submit;
+$('nid').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+$('search').oninput = render; $('undo').onclick = undoLast;
+$('expCsv').onclick = expCsv; $('expJson').onclick = expJson;
+$('impBtn').onclick = () => $('impFile').click();
+$('impFile').onchange = e => e.target.files[0] && impJson(e.target.files[0]);
+$('sSave').onclick = saveSync; $('sNow').onclick = () => syncNow(true);
+$('sUrl').value = cfg().url; $('sTok').value = cfg().token;
+$('auto').checked = ls.get('autoBk','1') === '1'; $('auto').onchange = () => ls.set('autoBk', $('auto').checked ? '1' : '0');
+window.addEventListener('online', () => syncNow());
+setInterval(() => syncNow(), 60000);
+
+openDb().then(render).then(async () => {
+  syncNow();
+  if (navigator.storage && navigator.storage.persist) {
+    const ok = await navigator.storage.persist();
+    $('persistNote').textContent = ok ? '✔ স্থায়ী স্টোরেজ চালু আছে' : 'স্থায়ী স্টোরেজের অনুমতি পাওয়া যায়নি – ব্যাকআপ নিতে ভুলবেন না';
+  }
+}).catch(e => show('bad', 'ডেটাবেস চালু হয়নি: ' + esc(e)));
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
